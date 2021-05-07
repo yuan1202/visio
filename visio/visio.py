@@ -7,6 +7,7 @@ import argparse
 
 from .utils import to_planar
 from .pipeline import make_pipeline
+from config import pipeline_config
 
 
 class Visio:
@@ -26,15 +27,19 @@ class Visio:
             is_rpi = platform.machine().startswith('arm') or platform.machine().startswith('aarch64')
 
         # main loop
-        with dai.Device(make_pipeline()) as device:
+        with dai.Device(make_pipeline(self.video is None)) as device:
 
             # Start the pipeline
             device.startPipeline()
 
-            vid_cap = cv2.VideoCapture(self.video)
-            framerate = vid_cap.get(cv2.CAP_PROP_FPS)
+            if self.video is not None:
+                frame_source = cv2.VideoCapture(self.video)
+                framerate = frame_source.get(cv2.CAP_PROP_FPS)
+            else:
+                frame_source = device.getOutputQueue("video", 4, False)
+            
             tracklets = device.getOutputQueue("tracklets", 4, False)
-
+            
             startTime = time.monotonic()
             counter = 0
             fps = 0
@@ -45,47 +50,43 @@ class Visio:
 
             while(True):
 
-                # get video frame
-                read_correctly, origFrame = vid_cap.read()
-
-                if not read_correctly:
-                    break
-
-                if self.image_size_visual is not None:
-                    H = W = self.image_size_visual
+                # get input frame
+                if self.video is not None:
+                    read_correctly, origFrame = frame_source.read()
+                    if not read_correctly:
+                        break
+                else:
+                    origFrame = frame_source.get().getCvFrame()
+                
+                # resize image frame for visualisation if configured
+                H, W, _ = origFrame.shape
+                if type(pipeline_config.visualisation_resize) == float:
+                    H = np.round(H * pipeline_config.visualisation_resize).astype(int)
+                    W = np.round(W * pipeline_config.visualisation_resize).astype(int)
                     frame = cv2.resize(origFrame, (W, H))
                 else:
-                    H, W, _ = origFrame.shape
                     frame = origFrame
-
+                
                 # create video recorder
                 # do it here t0 access image size conveniently
                 if (self.record is not None) and (writer is None):
                     writer = cv2.VideoWriter(self.record, cv2.VideoWriter_fourcc(*'MJPG'), 10, (W,  H))
 
+                # send image frame to detection network if input is video
+                if self.video is not None:
+                    nnFrame = dai.ImgFrame()
+                    nnFrame.setType(dai.ImgFrame.Type.BGR888p)
+                    nnFrame.setSequenceNum(seq_num)
+                    nnFrame.setWidth(pipeline_config.image_size_nn)
+                    nnFrame.setHeight(pipeline_config.image_size_nn)
+                    nnFrame.setData(to_planar(origFrame, (pipeline_config.image_size_nn, pipeline_config.image_size_nn)))
+                    device.getInputQueue("nn_in").send(nnFrame)
 
-                # process for detection network
-                nnFrame = dai.ImgFrame()
-                nnFrame.setType(dai.RawImgFrame.Type(8))
-                nnFrame.setSequenceNum(seq_num)
-                nnFrame.setWidth(self.image_size_nn)
-                nnFrame.setHeight(self.image_size_nn)
-                nnFrame.setData(to_planar(origFrame, (self.image_size_nn, self.image_size_nn)))
-                device.getInputQueue("nn_in").send(nnFrame)
-
-                # process for tracker
-                if self.visual_frame_tracking:
-                    trackerFrame = dai.ImgFrame()
-                    trackerFrame.setType(dai.RawImgFrame.Type(8))
-                    trackerFrame.setSequenceNum(seq_num)
-                    trackerFrame.setWidth(W)
-                    trackerFrame.setHeight(H)
-                    trackerFrame.setData(to_planar(origFrame, (W, H)))
-                    device.getInputQueue("tracker_in").send(trackerFrame)
-
+                # get tracking results
                 seq_num += 1
                 track = tracklets.get()
-
+                
+                # some basic stuff
                 counter+=1
                 current_time = time.monotonic()
                 if (current_time - startTime) > 1 :
@@ -94,6 +95,8 @@ class Visio:
                     startTime = current_time
 
                 color = (255, 0, 0)
+
+                # process tracking results
                 trackletsData = track.tracklets
 
                 for t in trackletsData:
@@ -124,7 +127,7 @@ class Visio:
                                 btSerial.write("s".encode())
 
                     try:
-                        label = self.labels[t.label]
+                        label = pipeline_config.labels[t.label]
                     except:
                         label = t.label
 
@@ -143,8 +146,9 @@ class Visio:
                     writer.write(frame)
 
                 if cv2.waitKey(1) == ord('q'):
-                    # close video recorder
+                    # close down
                     if self.record is not None:
                         writer.release()
-                    vid_cap.release()
+                    if self.video is not None:
+                        frame_source.release()
                     break

@@ -4,19 +4,19 @@ from collections import namedtuple
 Configuration = namedtuple(
     'Pipeline_Configuration', 
     [
-        'image_size_visual',
-        'image_size_nn',
-        'visual_frame_tracking',
-        'model',
-        'labels',
-        'tracking_labels',
+        'visualisation_resize',     # visualisation/recording resize ratio
+        'image_size_nn',            # image size for NN inference
+        'fps',                      # camera FPS
+        'model',                    # detection model file name
+        'labels',                   # detection model prediction labels
+        'tracking_labels',          # labels to track
     ]
 )
 
 pipeline_config = Configuration(
-    image_size_visual=None,
+    visualisation_resize=0.5,
     image_size_nn=416,
-    visual_frame_tracking=False, # this doesn't work yet
+    fps=30,
     model='tiny-yolo-v4_openvino_2021.2_6shave.blob',
     labels = [
         "person",         "bicycle",    "car",           "motorbike",     "aeroplane",   "bus",           "train",
@@ -32,5 +32,5 @@ pipeline_config = Configuration(
         "toaster",        "sink",       "refrigerator",  "book",          "clock",       "vase",          "scissors",
         "teddy bear",     "hair drier", "toothbrush"
     ],
-    tracking_labels=[0, 1, 2, 3, 5, 7],
+    tracking_labels=[1, 2, 3, 5, 7], # bicycle, car, motorbike, bus, truck
 )
