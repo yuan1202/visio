@@ -13,7 +13,7 @@ def make_pipeline(use_camera):
     # --------------------------------------------
     # detection model
     detectionNetwork = pipeline.createYoloDetectionNetwork()
-    detectionNetwork.setConfidenceThreshold(0.5)
+    detectionNetwork.setConfidenceThreshold(pipeline_config.detection_confidence)
     detectionNetwork.setNumClasses(80)
     detectionNetwork.setCoordinateSize(4)
     detectionNetwork.setAnchors(np.array([10, 14, 23, 27, 37, 58, 81, 82, 135, 169, 344, 319]))
