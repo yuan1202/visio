@@ -1,9 +1,11 @@
+import os
 from pathlib import Path
 import cv2
 import depthai as dai
 import numpy as np
 import time
 import argparse
+import platform
 
 from .utils import to_planar
 from .pipeline import make_pipeline
@@ -69,8 +71,12 @@ class Visio:
                 
                 # create video recorder
                 # do it here t0 access image size conveniently
-                if (self.record is not None) and (writer is None):
-                    writer = cv2.VideoWriter(self.record, cv2.VideoWriter_fourcc(*'MJPG'), 10, (W,  H))
+                if self.record and (writer is None):
+                    output_name = time.strftime('visio_recording_GMT-%Y%b%d-%HH%MM%SS.avi', time.gmtime())
+                    if self.video is not None:
+                        output_name = os.path.basename(self.video).split('.')[0] + '_' + output_name
+
+                    writer = cv2.VideoWriter(output_name, cv2.VideoWriter_fourcc(*'MJPG'), 10, (W,  H))
 
                 # send image frame to detection network if input is video
                 if self.video is not None:
