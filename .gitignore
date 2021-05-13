@@ -1,5 +1,6 @@
 *.avi
 *.mp4
 *.blob
+*.txt
 /.vscode/*
 **/__pycache__/**/*

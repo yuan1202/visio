@@ -46,7 +46,7 @@ class Visio:
             counter = 0
             fps = 0
             frame = None
-            writer = None
+            video_writer, meta_writer = None, None
 
             seq_num = 0
 
@@ -71,12 +71,14 @@ class Visio:
                 
                 # create video recorder
                 # do it here t0 access image size conveniently
-                if self.record and (writer is None):
-                    output_name = time.strftime('visio_recording_GMT-%Y%b%d-%HH%MM%SS.avi', time.gmtime())
+                if self.record and (video_writer is None) and (meta_writer is None):
+                    output_name = time.strftime('visio_recording_GMT-%Y%b%d-%HH%MM%SS', time.gmtime())
                     if self.video is not None:
                         output_name = os.path.basename(self.video).split('.')[0] + '_' + output_name
 
-                    writer = cv2.VideoWriter(output_name, cv2.VideoWriter_fourcc(*'MJPG'), 10, (W,  H))
+                    video_writer = cv2.VideoWriter(output_name+'.avi', cv2.VideoWriter_fourcc(*'MJPG'), 10, (W,  H))
+                    meta_writer = open(output_name+'.txt', 'a')
+                    meta_writer.write('frame id; detection label; tracking id; tracking status; x1; y1; x2; y2; X(mm); Y(mm); Z(mm);\n')
 
                 # send image frame to detection network if input is video
                 if self.video is not None:
@@ -146,18 +148,23 @@ class Visio:
                     cv2.putText(frame, f"Y: {int(t.spatialCoordinates.y)} mm", (x1 + 10, y1 + 80), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
                     cv2.putText(frame, f"Z: {int(t.spatialCoordinates.z)} mm", (x1 + 10, y1 + 95), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
 
-                cv2.putText(frame, "NN fps: {:.2f}".format(fps), (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_TRIPLEX, 0.4, color)
+                    if self.record is True:
+                        meta_line = f'{seq_num}; {label}; {t.id}; {statusMap[t.status]}; {x1}; {y1}; {x2}; {y2}; {int(t.spatialCoordinates.x)}; {int(t.spatialCoordinates.y)}; {int(t.spatialCoordinates.z)};\n'
+                        meta_writer.write(meta_line)
+
+                cv2.putText(frame, "Frame id: {}; NN fps: {:.2f};".format(seq_num, fps), (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_TRIPLEX, 0.4, color)
 
                 cv2.imshow("tracker", frame)
 
                 # write record frame
                 if self.record is True:
-                    writer.write(frame)
+                    video_writer.write(frame)
 
                 if cv2.waitKey(1) == ord('q'):
                     # close down
-                    if self.record is not None:
-                        writer.release()
+                    if self.record is True:
+                        video_writer.release()
+                        meta_writer.close()
                     if self.video is not None:
                         frame_source.release()
                     break
