@@ -15,7 +15,7 @@ Configuration = namedtuple(
 )
 
 pipeline_config = Configuration(
-    visualisation_resize=0.5,
+    visualisation_resize=0.3,
     image_size_nn=416,
     fps=30,
     model='tiny-yolo-v4_openvino_2021.2_6shave.blob',

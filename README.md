@@ -19,7 +19,7 @@ python main.py (path to video)
 python main.py (path to video) -r
 `  
 
-- Run on camera
+- Run on camera  
 `
 python main.py
 `
