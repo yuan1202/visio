@@ -16,10 +16,15 @@ python main.py (path to video)
 
 - Run and record inference result  
 `
-python main.py (path to video) -r (path to output video)
+python main.py (path to video) -r
 `  
 
+- Run on camera
+`
+python main.py
+`
+
 ## To Do
-- Make bluetooth work
-- Try to make full/bigger frame tracking work as it may improve tracking performace
-- Record tracking data as well and possibly train a lgb model to predict time to close-by?
+- Make bluetooth work (Lorenzo to update status)
+- Try to make full/bigger frame tracking work as it may improve tracking performace (Done)
+- Record tracking data as well and possibly train a lgb model to predict time to close-by? (WIP)
