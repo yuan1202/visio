@@ -11,12 +11,20 @@
 
 - Run on recorded video  
 `
-python main.py (path to video)
+python main.py -v (path to video)
+`  
+or  
+`
+python main.py --video (path to video)
 `  
 
 - Run and record inference result  
 `
-python main.py (path to video) -r
+python main.py -v (path to video) -r
+`  
+or  
+`
+python main.py -v (path to video) --record
 `  
 
 - Run on camera  

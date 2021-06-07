@@ -36,7 +36,7 @@ class Visio:
 
             if self.video is not None:
                 frame_source = cv2.VideoCapture(self.video)
-                framerate = frame_source.get(cv2.CAP_PROP_FPS)
+                # framerate = frame_source.get(cv2.CAP_PROP_FPS)
             else:
                 frame_source = device.getOutputQueue("video", 4, False)
             
@@ -149,15 +149,20 @@ class Visio:
                     cv2.putText(frame, f"ID: {[t.id]}", (x1 + 10, y1 + 35), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
                     cv2.putText(frame, statusMap[t.status], (x1 + 10, y1 + 50), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), color, cv2.FONT_HERSHEY_SIMPLEX)
-                    cv2.putText(frame, f"X: {int(t.spatialCoordinates.x)} mm", (x1 + 10, y1 + 65), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
-                    cv2.putText(frame, f"Y: {int(t.spatialCoordinates.y)} mm", (x1 + 10, y1 + 80), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
-                    cv2.putText(frame, f"Z: {int(t.spatialCoordinates.z)} mm", (x1 + 10, y1 + 95), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
+                    if pipeline_config.spatial_information:
+                        cv2.putText(frame, f"X: {int(t.spatialCoordinates.x)} mm", (x1 + 10, y1 + 65), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
+                        cv2.putText(frame, f"Y: {int(t.spatialCoordinates.y)} mm", (x1 + 10, y1 + 80), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
+                        cv2.putText(frame, f"Z: {int(t.spatialCoordinates.z)} mm", (x1 + 10, y1 + 95), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
 
                     if self.record is True:
-                        meta_line = f'{seq_num}; {label}; {t.id}; {statusMap[t.status]}; {x1}; {y1}; {x2}; {y2}; {int(t.spatialCoordinates.x)}; {int(t.spatialCoordinates.y)}; {int(t.spatialCoordinates.z)};\n'
+                        if pipeline_config.spatial_information:
+                            meta_line = f'{seq_num}; {label}; {t.id}; {statusMap[t.status]}; {x1}; {y1}; {x2}; {y2}; {int(t.spatialCoordinates.x)}; {int(t.spatialCoordinates.y)}; {int(t.spatialCoordinates.z)};\n'
+                        else:
+                            meta_line = f'{seq_num}; {label}; {t.id}; {statusMap[t.status]}; {x1}; {y1}; {x2}; {y2};\n'
+                            
                         meta_writer.write(meta_line)
 
-                cv2.putText(frame, "Frame id: {}; NN fps: {:.2f};".format(seq_num, fps), (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_TRIPLEX, 0.4, color)
+                cv2.putText(frame, "NN fps: {:.2f};".format(fps), (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_TRIPLEX, 0.4, color)
 
                 cv2.imshow("tracker", frame)
 

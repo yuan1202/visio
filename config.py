@@ -11,12 +11,12 @@ Configuration = namedtuple(
         'labels',                   # detection model prediction labels
         'tracking_labels',          # labels to track
         'detection_confidence',     # detection model confidence threshold
-        'fast_tracking',            # use nn passthrough for tracking instead of orignal video
+        'spatial_information',      # enable spatial information in detection result
     ]
 )
 
 pipeline_config = Configuration(
-    visualisation_resize=0.6,
+    visualisation_resize=0.5,
     image_size_nn=416,
     fps=30,
     model='tiny-yolo-v4_openvino_2021.2_6shave.blob',
@@ -35,6 +35,6 @@ pipeline_config = Configuration(
         "teddy bear",     "hair drier", "toothbrush"
     ],
     tracking_labels=[1, 2, 3, 5, 7], # bicycle, car, motorbike, bus, truck
-    detection_confidence=0.4,
-    fast_tracking=False,
+    detection_confidence=0.5,
+    spatial_information=False,
 )
