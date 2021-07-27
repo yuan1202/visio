@@ -31,8 +31,3 @@ python main.py -v (path to video) --record
 `
 python main.py
 `
-
-## To Do
-- Make bluetooth work (Lorenzo to update status)
-- Try to make full/bigger frame tracking work as it may improve tracking performace (Done)
-- Record tracking data as well and possibly train a lgb model to predict time to close-by? (WIP)
